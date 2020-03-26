@@ -60,7 +60,7 @@ def mse(predicted, true):
     :param true: target values
     :return: mean squared error between true and predicted values
     """
-    return 1/(2 * predicted.shape[0]) * np.sum(predicted - true)
+    return 1/(2 * predicted.shape[0]) * np.sum((predicted - true)**2)
 
 
 def mse_derivative(predicted, true, X):
@@ -70,7 +70,7 @@ def mse_derivative(predicted, true, X):
     :param X: feature vector
     :return: derivative of mean squared error between true and predicted values
     """
-    return (1/predicted.shape[0]) * np.sum((predicted - true) * X)
+    return (2/(predicted.shape[0])) * np.sum((predicted - true) * X)
 
 
 def gradient_descent(theta0, theta1, precision, l_r, X, y):
