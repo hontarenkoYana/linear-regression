@@ -48,14 +48,14 @@ def draw(X, y, learned_coef_mse, learned_coef_mae, sklearn_coef):
     plt.show()
 
 
-def linear_regression(X, theta0, theta1):
+def linear_regression(X, theta):
     """
     Linear regression function.
     :param X: feature vector
     :param theta: predicted coefficient
     :return: X * theta
     """
-    return X * theta1 + theta0
+    return X * theta[1] + theta[0]
 
 
 def mse(predicted, true):
@@ -98,11 +98,10 @@ def mae_derivative(predicted, true, X):
     return np.sum(greater)
 
 
-def gradient_descent(theta0, theta1, X, y, epsilon, precision, M, loss="mse"):
+def gradient_descent(theta, X, y, epsilon, precision, M, loss="mse"):
     """
     Optimization of loss mse function for linear regression with gradient descend algorithm.
-    :param theta0: bias variable (zero coefficient of linear regression)
-    :param theta1: coefficient of linear regression
+    :param theta: coefficients of linear regression
     :param X: feature vector
     :param y: target values vector
     :param epsilon: coefficient to interrupt cycle
@@ -112,39 +111,40 @@ def gradient_descent(theta0, theta1, X, y, epsilon, precision, M, loss="mse"):
     :return: new coefficients of linear regression
     """
     k = 0
+    theta_loss_df = theta.copy()
+
     if loss == "mse":
         derivative = mse_derivative
     else:
         derivative = mae_derivative
-    prediction = linear_regression(X, theta0, theta1)
-    theta0_loss_df = -derivative(prediction, y, 1)
-    theta1_loss_df = -derivative(prediction, y, X)
+    prediction = linear_regression(X, theta)
+    theta_loss_df[0] = -derivative(prediction, y, 1)
+    theta_loss_df[1] = -derivative(prediction, y, X)
     l_r = 0.5
-    while norm(np.array([theta0_loss_df, theta1_loss_df])) > epsilon and k < M:
-        theta0_new = theta0 + (l_r * theta0_loss_df)
-        theta1_new = theta1 + (l_r * theta1_loss_df)
-        prediction = linear_regression(X, theta0, theta1)
-        prediction_new = linear_regression(X, theta0_new, theta1_new)
+    theta_new = theta + (l_r * theta_loss_df)
+    while norm(theta_loss_df) > epsilon and k < M:
+        prediction = linear_regression(X, theta)
+        prediction_new = linear_regression(X, theta_new)
         mse_f = mse(prediction, y)
         mse_new_f = mse(prediction_new, y)
         if (mse_new_f - mse_f) > 0:
             l_r = l_r / 2
         else:
-            if norm(np.array([theta0_new, theta1_new]) - np.array([theta0, theta1])) > precision or np.abs(mse_new_f - mse_f) > precision:
+            if norm(theta_new - theta) > precision or np.abs(mse_new_f - mse_f) > precision:
                 k += 1
-                theta0 = theta0_new
-                theta1 = theta1_new
-                prediction = linear_regression(X, theta0, theta1)
-                theta0_loss_df = -derivative(prediction, y, 1)
-                theta1_loss_df = -derivative(prediction, y, X)
+                theta = theta_new.copy()
+                prediction = linear_regression(X, theta)
+                theta_loss_df[0] = -derivative(prediction, y, 1)
+                theta_loss_df[1] = -derivative(prediction, y, X)
             else:
                 k = M + 1
-    return np.array([theta0_new, theta1_new]).reshape(-1, 1), k
+        theta_new = theta + (l_r * theta_loss_df)
+    return theta_new
 
 
 X, y = data()
-learned_coef_mse, k = gradient_descent(np.array([1.5]).reshape(-1, 1), np.array([1.5]).reshape(-1, 1), X, y, 0.001, 0.001, 1000, "mse")
-learned_coef_mae, k = gradient_descent(np.array([1.5]).reshape(-1, 1), np.array([1.5]).reshape(-1, 1), X, y, 0.001, 0.001, 1000, "mae")
+learned_coef_mse = gradient_descent(np.array([1.5, 1.5]).reshape(-1, 1), X, y, 0.001, 0.001, 1000, "mse")
+learned_coef_mae = gradient_descent(np.array([1.5, 1.5]).reshape(-1, 1), X, y, 0.001, 0.001, 1000, "mae")
 lr = LinearRegression()
 lr.fit(X, y)
 sklearn_coef = np.array([lr.intercept_, lr.coef_])
